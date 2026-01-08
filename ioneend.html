@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>John Doe’s Sales Ledger</title>
+<style>
+body{font-family:"Segoe UI",Arial,sans-serif;background:#fff0f6;padding:20px;color:#444}
+h1{text-align:center;color:#c2185b;font-size:32px;margin-bottom:10px}
+.card{background:#fff;padding:20px;border-radius:16px;box-shadow:0 8px 20px rgba(0,0,0,.12);max-width:720px;margin:auto}
+label{display:block;margin-bottom:12px;font-weight:600}
+input{width:100%;padding:10px;font-size:16px;margin-top:5px;border-radius:8px;border:1px solid #ccc;box-sizing:border-box}
+button{margin:8px 5px 0 0;padding:10px 20px;font-size:16px;border:none;border-radius:25px;cursor:pointer;color:white}
+button.record{background:#e91e63}
+button.clear{background:#9e9e9e}
+button.delete{background:#ff1744;padding:6px 12px;font-size:14px;border-radius:12px}
+button.export{background:#4caf50}
+button:hover{opacity:0.9}
+table{width:100%;margin-top:30px;border-collapse:collapse;table-layout:auto}
+th,td{padding:10px;text-align:center;border:1px solid #f8bbd0}
+th{background:#f8bbd0;color:#880e4f}
+tr:nth-child(even){background:#fff5f8}
+.totals{margin-top:20px;font-size:18px;font-weight:bold;color:#880e4f;text-align:right}
+@media(max-width:600px){
+  input, button{font-size:14px;padding:8px}
+  table th, table td{padding:6px;font-size:14px}
+}
+</style>
+</head>
+<body>
+
+<h1>John Doe’s Sales Ledger</h1>
+<p style="text-align:center;font-weight:bold;color:#880e4f;">Private • Offline • Safe • Backup Ready</p>
+
+<div class="card">
+  <label>Item <input id="item" value="Watch"></label>
+  <label>Buying Price <input id="buy" type="number" value="50"></label>
+  <label>Selling Price <input id="sell" type="number" value="90"></label>
+  <label>Date <input id="date" type="date" value="2026-01-08"></label>
+
+  <button class="record" id="recordBtn">Record Sale</button>
+  <button class="clear" id="clearBtn">New Goods / Clear</button>
+  <button class="export" id="exportBtn">Download CSV</button>
+</div>
+
+<table>
+  <thead>
+    <tr><th>ID</th><th>Item</th><th>Buy</th><th>Sell</th><th>Profit</th><th>Date</th><th>Action</th></tr>
+  </thead>
+  <tbody id="ledgerBody">
+    <tr><td>1</td><td>Watch</td><td>50</td><td>90</td><td>40</td><td>2026-01-08</td><td><button class="delete">Delete</button></td></tr>
+    <tr><td>2</td><td>Bracelet</td><td>30</td><td>55</td><td>25</td><td>2026-01-08</td><td><button class="delete">Delete</button></td></tr>
+    <tr><td>3</td><td>Chain</td><td>70</td><td>110</td><td>40</td><td>2026-01-08</td><td><button class="delete">Delete</button></td></tr>
+    <tr><td>4</td><td>band</td><td>20</td><td>35</td><td>15</td><td>2026-01-08</td><td><button class="delete">Delete</button></td></tr>
+  </tbody>
+</table>
+
+<div class="totals">
+  Total Buying: <span id="totalBuy">170</span> | Total Selling: <span id="totalSell">290</span> | Total Profit: <span id="totalProfit">120</span>
+</div>
+
+<script>
+let ledger = [
+  {item:"Watch", buy:50, sell:90, date:"2026-01-08"},
+  {item:"Bracelet", buy:30, sell:55, date:"2026-01-08"},
+  {item:"Chain", buy:70, sell:110, date:"2026-01-08"},
+  {item:"band", buy:20, sell:35, date:"2026-01-08"}
+];
+
+// Elements
+const itemInput = document.getElementById("item");
+const buyInput = document.getElementById("buy");
+const sellInput = document.getElementById("sell");
+const dateInput = document.getElementById("date");
+const ledgerBody = document.getElementById("ledgerBody");
+
+// Render function
+function renderLedger(){
+  ledgerBody.innerHTML="";
+  let totalBuy=0, totalSell=0, totalProfit=0;
+  ledger.forEach((r,i)=>{
+    const profit=r.sell-r.buy;
+    totalBuy+=r.buy; totalSell+=r.sell; totalProfit+=profit;
+
+    const tr=ledgerBody.insertRow();
+    tr.insertCell(0).innerText=i+1;
+    tr.insertCell(1).innerText=r.item;
+    tr.insertCell(2).innerText=r.buy;
+    tr.insertCell(3).innerText=r.sell;
+    tr.insertCell(4).innerText=profit;
+    tr.insertCell(5).innerText=r.date;
+    const actionCell=tr.insertCell(6);
+    const delBtn=document.createElement("button");
+    delBtn.innerText="Delete"; delBtn.className="delete";
+    delBtn.onclick=()=>{ ledger.splice(i,1); renderLedger(); };
+    actionCell.appendChild(delBtn);
+  });
+
+  document.getElementById("totalBuy").innerText=totalBuy;
+  document.getElementById("totalSell").innerText=totalSell;
+  document.getElementById("totalProfit").innerText=totalProfit;
+}
+
+// Record new sale
+document.getElementById("recordBtn").addEventListener("click",()=>{
+  const item=itemInput.value.trim(), buy=Number(buyInput.value), sell=Number(sellInput.value), date=dateInput.value;
+  if(!item||isNaN(buy)||isNaN(sell)||!date){ alert("Fill all fields correctly"); return; }
+  ledger.push({item,buy,sell,date});
+  renderLedger();
+  itemInput.value=""; buyInput.value=""; sellInput.value=""; dateInput.value="";
+});
+
+// Clear ledger
+document.getElementById("clearBtn").addEventListener("click",()=>{
+  if(confirm("Clear entire ledger?")){ ledger=[]; renderLedger(); }
+});
+
+// Export CSV
+document.getElementById("exportBtn").addEventListener("click",()=>{
+  if(ledger.length===0){alert("No data"); return;}
+  const header=["ID","Item","Buy","Sell","Profit","Date"];
+  const rows=ledger.map((r,i)=>[i+1,r.item,r.buy,r.sell,r.sell-r.buy,r.date]);
+  const csv=[header,...rows].map(r=>r.join(",")).join("\n");
+  const blob=new Blob([csv],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download="JohnLedger.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+});
+
+// Initial render
+renderLedger();
+</script>
+
+</body>
+</html>
